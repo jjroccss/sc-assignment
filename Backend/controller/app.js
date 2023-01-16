@@ -9,7 +9,7 @@ var offers = require('../model/offer');
 var likes = require('../model/likes');
 var images = require('../model/images')
 var verifyToken = require('../auth/verifyToken.js');
-
+var validator=require('../validation/validation');
 var path = require("path");
 var multer = require('multer')
 
@@ -40,7 +40,7 @@ app.post('/user/login', function (req, res) {//Login
 	});
 });
 
-app.post('/user', function (req, res) {//Create User
+app.post('/user',validator.validateRegister, function (req, res) {//Create User
 	var username = req.body.username;
 	var email = req.body.email;
 	var password = req.body.password;
@@ -68,7 +68,7 @@ app.post('/user/logout', function (req, res) {//Logout
 });
 
 
-app.put('/user/update/', verifyToken, function (req, res) {//Update user info
+app.put('/user/update/', verifyToken,validator.validateUpdate, function (req, res) {//Update user info
 	var id = req.id
 	var username = req.body.username;
 	var firstname = req.body.firstname;
@@ -86,7 +86,7 @@ app.put('/user/update/', verifyToken, function (req, res) {//Update user info
 });
 
 //Listing APIs
-app.post('/listing/', verifyToken, function (req, res) {//Add Listing
+app.post('/listing/', verifyToken,validator.validateProduct, function (req, res) {//Add Listing
 	var title = req.body.title;
 	var category = req.body.category;
 	var description = req.body.description;
@@ -113,6 +113,7 @@ app.get('/user/listing', verifyToken, function (req, res) {//Get all Listings of
 			console.log(err)
 			res.json({ success: false });
 		} else {
+			result=validator.sanitizeResult(result)
 			res.status(200);
 			res.setHeader('Content-Type', 'application/json');
 			res.json({ success: true, result: result });
@@ -127,6 +128,7 @@ app.get('/listing/:id', function (req, res) {//View a listing
 			res.status(500);
 			res.json({ success: false })
 		} else {
+			result=validator.sanitizeResult(result)
 			res.status(200);
 			res.setHeader('Content-Type', 'application/json');
 			res.json({ success: true, result: result })
@@ -142,6 +144,7 @@ app.get('/search/:query', verifyToken, function (req, res) {//View all other use
 			res.status(500);
 			res.json({ success: false })
 		} else {
+			result=validator.sanitizeResult(result)
 			res.status(200);
 			res.setHeader('Content-Type', 'application/json');
 			res.json({ success: true, result: result })
@@ -149,7 +152,7 @@ app.get('/search/:query', verifyToken, function (req, res) {//View all other use
 	});
 });
 
-app.put('/listing/update/', function (req, res) {//View a listing
+app.put('/listing/update/',verifyToken,validator.validateProduct, function (req, res) {//View a listing
 	var title = req.body.title;
 	var category = req.body.category;
 	var description = req.body.description;
@@ -167,7 +170,7 @@ app.put('/listing/update/', function (req, res) {//View a listing
 	});
 });
 
-app.delete('/listing/delete/', function (req, res) {//View a listing
+app.delete('/listing/delete/',verifyToken, function (req, res) {//View a listing
 	var id = req.body.id;
 
 	listing.deleteListing(id, function (err, result) {
@@ -207,6 +210,7 @@ app.get('/offer/', verifyToken, function (req, res) {//View all offers
 			res.status(500);
 			res.json({ success: false })
 		} else {
+			result=validator.sanitizeResult(result)
 			res.status(201);
 			res.setHeader('Content-Type', 'application/json');
 			console.log(result)
@@ -215,7 +219,7 @@ app.get('/offer/', verifyToken, function (req, res) {//View all offers
 	});
 });
 
-app.post('/offer/decision/', function (req, res) {//View all offers
+app.post('/offer/decision/',verifyToken, function (req, res) {//View all offers
 	var status = req.body.status;
 	var offerid = req.body.offerid;
 	offers.AcceptOrRejectOffer(status, offerid, function (err, result) {
@@ -237,6 +241,7 @@ app.get('/offer/status/', verifyToken, function (req, res) {//View all offers
 			res.status(500);
 			res.json({ success: false })
 		} else {
+			result=validator.sanitizeResult(result)
 			res.status(201);
 			res.setHeader('Content-Type', 'application/json');
 			res.json({ success: true, result: result })
@@ -295,7 +300,7 @@ app.get('/likeorunlike/:listingid/', verifyToken, function (req, res) {//Like or
 	});
 });
 
-app.get('/likes/:listingid/', function (req, res) {//View all offers
+app.get('/likes/:listingid/',verifyToken, function (req, res) {//View all offers
 	var listingid = req.params.listingid;
 	likes.getLike(listingid, function (err, result) {
 		if (err) {
