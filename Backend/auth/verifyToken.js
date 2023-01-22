@@ -1,3 +1,5 @@
+
+
 var jwt = require('jsonwebtoken');
 var config = require('../config');
 
@@ -11,10 +13,10 @@ function verifyToken(req, res, next){
        return res.send({auth:'false', message:'Not authorized!'});
     }else{
        token=token.split('Bearer ')[1]; //obtain the token's value
-       jwt.verify(token, config.key, function(err, decoded){ //verify token
+       jwt.verify(token, config.key,{ algorithms: ['HS256'] }, function(err, decoded){ //verify token
         if(err){
             res.status(403);
-            return res.end({auth:false, message:'Not authorized!'});
+            return res.send({auth:false, message:'Not authorized!'});
         }else{
             req.id = decoded.id
             next();
