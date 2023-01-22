@@ -12,11 +12,16 @@ var verifyToken = require('../auth/verifyToken.js');
 var validator=require('../validation/validation');
 var path = require("path");
 var multer = require('multer')
-
+var morgan=require('morgan');
+var rfs = require('rotating-file-stream');
 var cors = require('cors');//Just use(security feature)
 
 var urlencodedParser = bodyParser.urlencoded({ extended: false });
-
+var appLogStream = rfs.createStream('access.log', {
+	interval: '1d', // rotate daily
+	path: path.join(__dirname, 'log') //write to a subdir log
+	})
+app.use(morgan("combined", { stream: appLogStream}));
 app.options('*', cors());//Just use
 app.use(cors());//Just use
 app.use(bodyParser.json());
@@ -35,6 +40,7 @@ app.post('/user/login', function (req, res) {//Login
 			res.statusCode = 201;
 			res.setHeader('Content-Type', 'application/json');
 			delete result[0]['password'];//clear the password in json data, do not send back to client
+			delete result[0]['salt'];//clear the password in json data, do not send back to client
 			res.json({ success: true, UserData: JSON.stringify(result), token: token, status: 'You are successfully logged in!' });
 		}
 	});
@@ -121,7 +127,7 @@ app.get('/user/listing', verifyToken, function (req, res) {//Get all Listings of
 	});
 });
 
-app.get('/listing/:id', function (req, res) {//View a listing
+app.get('/listing/:id',verifyToken, function (req, res) {//View a listing
 	var id = req.params.id
 	listing.getListing(id, function (err, result) {
 		if (err) {
